@@ -4,15 +4,26 @@ import { connect } from 'react-redux';
 import { fetchUser } from '../../actions';
 import { Link } from 'react-router-dom';
 import CustomerForm from './CustomerForm';
+import CurrentSekhra from './CurrentSekhra';
 import Footer from '../Footer';
 import Header from '../Header';
 
 class Profile extends Component {
     constructor(props) {
         super(props);
-        this.state = { user: {}, name: '', email: '', phone: '' };
-        const id = qs.parse(this.props.location.search, { ignoreQueryPrefix: true }).id;
-        this.props.fetchUser(id);
+        this.state = { user: {}, name: '', email: '', phone: '', action: '' };
+        const params = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
+        if(params.action) {
+            this.setState({action:params.action});
+        }
+    }
+    renderContent = () => {
+        switch(this.state.action) {
+            case 'current':
+                return <div><CurrentSekhra /></div>;
+            default:
+                return <div>{this.props.user && <CustomerForm customer={this.props.user}/>}</div>;
+        }
     }
     render() {
         return (
@@ -24,7 +35,7 @@ class Profile extends Component {
                             <div className="tile">
                                 <div className="tile is-parent is-3">
                                     <article className="tile is-child">
-                                        <a href="placeholer" className="button is-large is-fullwidth is-white" style={{ marginBottom: "10px" }}>My skhera</a>
+                                        <Link to="/currentSekhra" className="button is-large is-fullwidth is-white" style={{ marginBottom: "10px" }}>My skhera</Link>
                                         <a href="placeholer" className="button is-large is-fullwidth" style={{ marginBottom: "10px", backgroundColor: "rgb(65,157,120)", color: "white" }}>My profile</a>
                                         <a href="placeholer" className="button is-large is-fullwidth is-white" style={{ marginBottom: "10px" }}>My address</a>
                                         <a href="placeholer" className="button is-large is-fullwidth is-white" style={{ marginBottom: "10px" }}>FAQ</a>
@@ -33,7 +44,7 @@ class Profile extends Component {
                                 <div className="tile is-parent is-1"></div>
                                 <div className="tile is-parent is-5">
                                     <article className="tile is-child">
-                                        {this.props.user && <CustomerForm customer={this.props.user}/>}
+                                        {this.renderContent()}
                                     </article>
                                 </div>
                                 <Link to='/requestSekhra' className="tile is-parent is-vertical is-3">
@@ -62,7 +73,6 @@ class Profile extends Component {
 }
 
 const mapStateToProps = (state) => {
-    console.log(state);
     return { user: state.auth.user };
 }
 

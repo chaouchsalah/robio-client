@@ -1,4 +1,4 @@
-import { SIGN_IN, SIGN_OUT, FETCH_USER } from '../actions/types';
+import { SIGN_IN, SIGN_OUT, FETCH_USER, FETCH_COURSIER } from '../actions/types';
 
 const INITIAL_STATE = {
     isSignedIn: null,
@@ -12,6 +12,8 @@ export default (state = INITIAL_STATE, action) => {
         case SIGN_OUT:
             return { ...state, isSignedIn: false, user: null };
         case FETCH_USER:
+            return { ...state, user: action.payload };
+        case FETCH_COURSIER :
             return { ...state, user: action.payload };
         default:
             return state;

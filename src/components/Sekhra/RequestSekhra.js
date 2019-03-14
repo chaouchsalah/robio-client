@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { connect } from 'react-redux';
+import { addSekhra } from '../../actions';
+import history from '../../history';
 import Header from '../Header';
 import Footer from '../Footer';
 import Maps from '../maps/Maps';
@@ -65,24 +67,29 @@ class RequestSekhra extends Component {
         }
     }
     estimateSekhra = async () => {
-        console.log(this.state.from, this.state.to);
         if (this.state.from && this.state.to) {
-            const response = await axios.post(
-                'http://localhost:6200/sekhrasEstimation',
-                {
-                    from: this.state.from,
-                    to: this.state.to,
-                    customer: this.props.user
-                }
-            );
-            const routes = response.data.routes
-            this.setState({
-                coursier: response.data.coursier,
-                route: routes.shapePoints,
-                distance: routes.distance,
-                time: routes.formattedTime,
-                action: 'validate'
-            });
+            try{
+                const response = await axios.post(
+                    'http://localhost:6200/sekhrasEstimation',
+                    {
+                        from: this.state.from,
+                        to: this.state.to,
+                        customer: this.props.user
+                    }
+                );
+                const routes = response.data.routes
+                this.setState({
+                    coursier: response.data.coursier,
+                    route: routes.shapePoints,
+                    distance: routes.distance,
+                    time: routes.formattedTime,
+                    action: 'validate'
+                });
+            }catch(error) {
+                // TODO: show error message to user
+                console.log(error);
+            }
+            
         }
     }
     validateSekhra = async () => {
@@ -90,19 +97,36 @@ class RequestSekhra extends Component {
         const start = shapePoints[0];
         const end = shapePoints[shapePoints.length - 1];
         if (this.state.description && this.state.items.length !== 0) {
-            await axios.post(
-                'http://localhost:6200/sekhras',
-                {
-                    sekhra: {
-                        from: start,
-                        to: end,
-                        description: this.state.description,
-                        items: this.state.items
-                    },
-                    customer: this.props.user,
-                    coursier: this.state.coursier
-                }
-            )
+            const sekhra = {
+                from: start,
+                to: end,
+                description: this.state.description,
+                items: this.state.items,
+                waypoints: shapePoints,
+                customer: this.props.user,
+                coursier: this.state.coursier
+            }
+            try {
+                await axios.post(
+                    'http://localhost:6200/sekhras',
+                    {
+                        sekhra: {
+                            from: start,
+                            to: end,
+                            description: this.state.description,
+                            items: this.state.items
+                        },
+                        customer: this.props.user,
+                        coursier: this.state.coursier
+                    }
+                );
+            }catch(error) {
+                // TODO: show error message to user
+                console.log(error);
+            }
+
+            this.props.addSekhra(sekhra);
+            history.push('/customer/profile?action=current');
         }
     }
     renderMap = () => {
@@ -207,4 +231,6 @@ const mapStateToProps = state => {
     return { user: state.auth.user };
 }
 
-export default connect(mapStateToProps)(RequestSekhra);
+export default connect(mapStateToProps, {
+    addSekhra
+})(RequestSekhra);

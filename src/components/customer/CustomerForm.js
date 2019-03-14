@@ -8,7 +8,13 @@ class CustomerForm extends React.Component {
 
     updateProfile = (e) => {
         if(this.state.name){
+            try{
+                this.props.updateUser(this.props.user._id);
             this.toggleModal();
+            }catch(error) {
+                // TODO: show error message to user
+                console.log(error);
+            }
         }
         e.preventDefault();
     }
@@ -91,6 +97,10 @@ class CustomerForm extends React.Component {
     }
 }
 
-export default connect(null,{
+const mapStateToProps = state => {
+    return {user: state.auth.user};
+}
+
+export default connect(mapStateToProps,{
     updateUser
 })(CustomerForm);
