@@ -4,9 +4,10 @@ import Maps from '../maps/Maps';
 
 class CurrentSekhra extends Component {
     render() {
+        console.log(this.props.sekhra);
         return (
             <div>
-                {this.props.sekhra && <Maps sekhra={this.props.sekhra}/> }
+                {/* {this.props.sekhra && <Maps sekhra={this.props.sekhra}/> } */}
             </div>
         );
     }

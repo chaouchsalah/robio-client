@@ -8,15 +8,29 @@ export default function login(userType, action) {
                     userType: userType
                 };
                 try {
-                    action(user);
-                }catch(error) {
+                    if (userType === 'coursier') {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(showPosition);
+                        }
+                        function showPosition(position) {
+                            user.location = {
+                                lat: position.coords.latitude,
+                                long: position.coords.longitude
+                            };
+                            action(user);
+                        }
+                    }else {
+                        action(user);
+                    }
+                    
+                } catch (error) {
                     // TODO: show error message to user
-                    console.log({error});
+                    console.log({ error });
                 }
             });
         } else {
             // TODO: show error message to user
             console.log('User cancelled login or did not fully authorize.');
         }
-    }, {scope: 'public_profile,email'});
+    }, { scope: 'public_profile,email' });
 }

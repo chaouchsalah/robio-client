@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { signIn } from '../../actions';
+import { signIn } from '../../actions/authActions';
 import signup from '../../helpers/FBAuth';
 
 class Signup extends React.Component {
