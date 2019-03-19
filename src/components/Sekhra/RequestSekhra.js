@@ -1,37 +1,65 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 import { connect } from 'react-redux';
-import Header from '../Header';
-import Footer from '../Footer';
+import qs from 'qs';
+import { fetchUser } from '../../actions/userActions';
+import { fetchSekhra } from '../../actions/sekhraActions';
+import { addSekhra } from '../../helpers/sekhra';
 import Maps from '../maps/Maps';
 
 class RequestSekhra extends Component {
+    constructor(props) {
+        super(props);
+        const { sekhra } = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
+        if (sekhra) {
+            const token = sessionStorage.getItem('token');
+            this.props.fetchSekhra(token, sekhra);
+        }
+    }
     state = {
         items: [],
-        description: null,
-        item: null,
-        from: null,
-        to: null,
-        route: null,
-        time: null,
-        distance: null,
-        action: null,
-        coursier: null
+        description: '',
+        item: '',
+        from: '',
+        to: '',
+        route: '',
+        time: '',
+        distance: '',
+        action: '',
+        price: '',
+        coursier: {}
     };
+    componentDidUpdate() {
+        const { sekhra } = this.props;
+        if (Object.keys(sekhra).length !== 0) {
+            if (sekhra.from !== this.state.from) {
+                const { from, to, description, items, route } = sekhra;
+                this.setState({
+                    action: 'validate',
+                    from,
+                    to,
+                    description,
+                    items,
+                    route: route.waypoints,
+                    time: route.formattedTime,
+                    distance: route.distance
+                });
+            }
+        }
+    }
     renderAddedItem = () => {
         return this.state.items.map((item, index) => {
             return (
-                <div className="tile notification is-info" key={index}>
-                    <li key={index}>
+                <div className="columns notification is-info" key={index}
+                    style={{ padding: "0" }}>
+                    <li className="column is-11" key={index}>
                         {item}
                     </li>
-                    <span className="icon is-small is-right"
+                    <span className="column icon is-small"
                         onClick={() => this.removeItem(index)}
-                        style={{ cursor: "pointer", marginLeft: "60%" }}>
+                        style={{ cursor: "pointer", float: "right" }}>
                         <i className="fas fa-minus"></i>
                     </span>
                 </div>
-
             );
         })
     };
@@ -49,62 +77,77 @@ class RequestSekhra extends Component {
         if (!this.state.action) {
             return (
                 <button
-                    className="button is-primary"
-                    onClick={this.estimateSekhra}>
+                    className="button is-primary is-fullwidth"
+                    onClick={this.estimateSekhra}
+                    style={{ backgroundColor: "rgb(55,135,103)" }}>
                     Estimate
-                        </button>
+                    </button>
             );
         } else {
             return (
                 <button
-                    className="button is-primary"
-                    onClick={this.validateSekhra}>
+                    className="button is-primary is-fullwidth"
+                    onClick={this.validateSekhra}
+                    style={{ backgroundColor: "rgb(55,135,103)" }}>
                     Validate Sekhra
-                        </button>
+                    </button>
             );
         }
     }
     estimateSekhra = async () => {
-        console.log(this.state.from, this.state.to);
-        if (this.state.from && this.state.to) {
-            const response = await axios.post(
-                'http://localhost:6200/sekhrasEstimation',
-                {
-                    from: this.state.from,
-                    to: this.state.to,
-                    customer: this.props.user
+        const token = sessionStorage.getItem('token');
+        try {
+            this.props.fetchUser(token);
+        } catch (error) {
+            console.log(error);
+        }
+        const {
+            from,
+            to,
+            description,
+            items
+        } = this.state;
+        const customer = this.props.user;
+        if (from && to && description && items.length !== 0) {
+            try {
+                const sekhra = {
+                    from,
+                    to,
+                    description,
+                    items,
+                    customer
                 }
-            );
-            const routes = response.data.routes
-            this.setState({
-                coursier: response.data.coursier,
-                route: routes.shapePoints,
-                distance: routes.distance,
-                time: routes.formattedTime,
-                action: 'validate'
-            });
+                addSekhra(sekhra, token);
+            } catch (error) {
+                // TODO: show error message to user
+                console.log(error);
+            }
+
         }
     }
-    validateSekhra = async () => {
-        const shapePoints = this.state.route;
-        const start = shapePoints[0];
-        const end = shapePoints[shapePoints.length - 1];
-        if (this.state.description && this.state.items.length !== 0) {
-            await axios.post(
-                'http://localhost:6200/sekhras',
-                {
-                    sekhra: {
-                        from: start,
-                        to: end,
-                        description: this.state.description,
-                        items: this.state.items
-                    },
-                    customer: this.props.user,
-                    coursier: this.state.coursier
-                }
-            )
-        }
-    }
+    // validateSekhra = () => {
+    //     const shapePoints = this.state.route;
+    //     const start = shapePoints[0];
+    //     const end = shapePoints[shapePoints.length - 1];
+    //     if (this.state.description && this.state.items.length !== 0) {
+    //         const sekhra = {
+    //             from: start,
+    //             to: end,
+    //             description: this.state.description,
+    //             items: this.state.items,
+    //             waypoints: shapePoints,
+    //             customer: this.props.user,
+    //             coursier: this.state.coursier
+    //         }
+    //         try {
+    //             this.props.addSekhra(sekhra);
+    //         } catch (error) {
+    //             // TODO: show error message to user
+    //             console.log(error);
+    //         }
+    //         history.push('/customer/profile?action=current');
+    //     }
+    // }
     renderMap = () => {
         if (this.state.route) {
             const shapePoints = this.state.route;
@@ -129,23 +172,29 @@ class RequestSekhra extends Component {
     }
     render() {
         return (
-            <div>
-                <Header />
-                <h2 className="title">Request Sekhra</h2>
+            <div style={{ marginTop: "15vh", marginBottom: "15vh" }}>
+                <div className="columns">
+                    <div className="column is-offset-2 is-4">
+                        <h2 className="title">Request Sekhra</h2>
+                    </div>
+                </div>
                 <div className="columns">
                     <div className="column is-offset-2 is-4">
                         <div className="field">
-                            <label className="label">Describe your sekhra</label>
+                            <label className="label has-text-grey-light is-size-7">Describe your sekhra</label>
                             <div className="control has-icons-left">
                                 <input className="input"
                                     type="text"
                                     value={this.state.description}
+                                    style={{ height: "8vh" }}
                                     onChange={(e) => this.setState({ description: e.target.value })} />
                                 <span className="icon is-small is-left">
                                     <i className="fas fa-file-alt"></i>
                                 </span>
                             </div>
                         </div>
+                        <label className="label has-text-grey-light is-size-7">Describe your sekhra</label>
+
                         <div className="field has-addons">
                             <div className="control has-icons-left has-icons-right is-expanded">
                                 <input className="input"
@@ -155,7 +204,6 @@ class RequestSekhra extends Component {
                                 <span className="icon is-small is-left">
                                     <i className="fas fa-archive"></i>
                                 </span>
-
                             </div>
                             <div className="control">
                                 <span className="button"
@@ -168,7 +216,51 @@ class RequestSekhra extends Component {
                         <ul style={{ listStyleType: "disc" }}>
                             {this.renderAddedItem()}
                         </ul>
+                        <div className="columns">
+                            <div className="column field">
+                                <label className="label has-text-grey-light is-size-7">Describe your sekhra</label>
+                                <div className="control has-icons-left">
+                                    <div className="select">
+                                        <select>
+                                            <option defaultValue>ASAP</option>
+                                        </select>
+                                    </div>
+                                    <span className="icon is-left">
+                                        <i className="far fa-clock"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="column field">
+                                <label className="label has-text-grey-light is-size-7">Describe your sekhra</label>
+                                <div className="control has-icons-left">
+                                    <input className="input"
+                                        type="date"
+                                        value={this.state.description}
+                                        onChange={(e) => this.setState({ description: e.target.value })} />
+                                    <span className="icon is-small is-left">
+                                        <i className="far fa-calendar"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="field">
+                            <label className="label has-text-grey-light is-size-7">Describe your sekhra</label>
+                            <div className="control has-icons-left">
+                                <input className="input"
+                                    type="text"
+                                    value={this.state.price}
+                                    disabled />
+                                <span className="icon is-small is-left">
+                                    <i className="fas fa-dollar-sign"></i>
+                                </span>
+                            </div>
+                        </div>
+                        {this.renderAction()}
+                    </div>
+                    <div className="column is-4">
+                        <label className="label has-text-grey-light is-size-7">Address</label>
                         <div className="field has-addons">
+
                             <p className="control">
                                 <span className="button">From</span>
                             </p>
@@ -190,21 +282,20 @@ class RequestSekhra extends Component {
                                     onChange={(e) => this.setState({ to: e.target.value })} />
                             </p>
                         </div>
-                        {this.renderAction()}
-                    </div>
-                    <div className="column is-4">
                         {this.renderMap()}
                         {this.renderDuration()}
                     </div>
                 </div>
-                <Footer />
             </div>
         );
     }
 }
 
 const mapStateToProps = state => {
-    return { user: state.auth.user };
+    return { user: state.user.user, sekhra: state.sekhra.sekhra };
 }
 
-export default connect(mapStateToProps)(RequestSekhra);
+export default connect(mapStateToProps, {
+    fetchUser,
+    fetchSekhra
+})(RequestSekhra);

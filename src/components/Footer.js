@@ -5,14 +5,16 @@ import GreenLogo from '../images/logoGreen.png';
 class Footer extends React.Component {
     render() {
         return (
-            <div>
-                <footer
-                    style={{ backgroundColor: "white", bottom: "0", width: "100%", position: "absolute" }}>
+                <footer className="container" style={{ position: "absolute", bottom: "0", width: "100%", height: "15vh" }}>
                     <div className="columns">
-                        <Link to='/' className="column is-offset-1 is-3">
-                            <img className="image" src={GreenLogo} alt="Logo" style={{height: "20vh"}} />
-                        </Link>
-                        <div className="column is-offset-4">
+                        <div className="column is-8">
+                            <div className="columns">
+                                <Link to='/' className="column is-2 is-offset-2">
+                                    <img className="image" src={GreenLogo} alt="Logo" />
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="column">
                             <div className="columns">
                                 <div className="column">
                                     About
@@ -27,7 +29,6 @@ class Footer extends React.Component {
                         </div>
                     </div>
                 </footer>
-            </div>
         );
     }
 }
