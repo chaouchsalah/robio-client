@@ -7,6 +7,7 @@ const Modal = props => {
         return null;
     }
     let content;
+    console.log(props.action)
     if(props.action === 'Signup'){
         content = <Signup userType={props.userType}/>
     }else if(props.action === 'Login') {
