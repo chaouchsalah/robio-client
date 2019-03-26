@@ -1,4 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { signIn } from '../../actions';
+import signup from '../../helpers/FBAuth';
 
 class Signup extends React.Component {
     render() {
@@ -6,11 +9,16 @@ class Signup extends React.Component {
             <div>
                 <h2 className="title">Signup</h2>
                 <h2 className="subtitle">Welcome To Jible Services</h2><br/>
-                <a className="button is-large is-link is-fullwidth"
-                    href={`http://localhost:6200/auth/${this.props.userType}`}>Signup with Facebook</a>
+                <button
+                    className="button is-large is-link is-fullwidth"
+                    onClick={()=>signup(this.props.userType,this.props.signIn)}>
+                    Signup with Facebook
+                </button>
             </div>
         );
     }
 };
 
-export default Signup;
+export default connect(null,{
+    signIn
+})(Signup); 
